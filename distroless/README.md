@@ -18,5 +18,5 @@ if you change requirements.txt. The final step is very fast and will change on e
 ## Build and run
 
 1. Build the image: `docker build -t myapp .`
-2. Run it! `docker run -t -p 5000:5000 --memory=30m myapp `
+2. Run it! `docker run -t -p 5000:5000 --memory=35m myapp`
 
