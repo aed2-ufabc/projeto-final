@@ -1,12 +1,15 @@
 import requests
 
 def call_api(user_input):
-    api_endpoint = 'http://remote:5001/'
-
-    # Set up the parameters with the user input
-    params = {'q': user_input}
+    host = 'remote1'
+    if user_input == 'b':
+        host = 'remote2'
+    
+    api_endpoint = 'http://' + host + ':8080'
 
     try:
+        params = {'q': user_input}
+
         # Make the API call
         response = requests.get(api_endpoint, params=params)
 

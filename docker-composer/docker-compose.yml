@@ -16,7 +16,7 @@ services:
         limits:
           # cpus: '0.001'
           memory: 30M
-  remote:
+  remote1:
     build:
       dockerfile: Dockerfile
       context: ./remote
@@ -24,30 +24,30 @@ services:
       # map files from ./remote to /app inside container
       # every time that something asks to a file in /app inside the container
       # it will search in ./remote from current directory
-      - ./remote:/app
+     - ./remote:/app
+     - ./files/remote1:/app/files
     ports:
-      - '5001:5001'
+      - 5001:8080
     deploy:
       resources:
         limits:
           # cpus: '0.001'
           memory: 20M
-
-
-  # client:
-  #   build:
-  #     dockerfile: Dockerfile.dev
-  #     context: ./client
-  #   volumes:
-  #     - /app/node_modules
-  #     - ./client:/app
-  # worker:
-  #   build:
-  #     dockerfile: Dockerfile.dev
-  #     context: ./worker
-  #   volumes:
-  #     - /app/node_modules
-  #     - ./worker:/app
-  #   environment:
-  #     - REDIS_HOST=redis
-  #     - REDIS_PORT=6379
+  remote2:
+    build:
+      dockerfile: Dockerfile
+      context: ./remote
+    volumes:
+      # map files from ./remote to /app inside container
+      # every time that something asks to a file in /app inside the container
+      # it will search in ./remote from current directory
+     - ./remote:/app
+     - ./files/remote2:/app/files
+    ports:
+      - 5002:8080
+    deploy:
+      resources:
+        limits:
+          # cpus: '0.001'
+          memory: 20M
+   

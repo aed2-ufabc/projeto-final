@@ -29,6 +29,7 @@ class MyHandler(BaseHTTPRequestHandler):
 
         if 'q' not in query_params:
             self._send_response(400, 'text/plain', 'Missing "q" query parameter')
+            return
             
         param_value = query_params['q'][0]
         file_content = read_file(param_value)
@@ -40,7 +41,7 @@ class MyHandler(BaseHTTPRequestHandler):
         response_body = json.dumps(response_data)
         self._send_response(200, 'application/json', response_body)
 
-def run(port=5001):
+def run(port=8080):
     server_address = (hostName, port)
     print("Server started http://%s:%s" % server_address)
     webServer = HTTPServer(server_address, MyHandler)
