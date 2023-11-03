@@ -11,8 +11,6 @@ services:
       # every time that something asks to a file in /app inside the container
       # it will search in ./main from current directory
       - ./main:/app
-    ports:
-      - '5000:5000'
     deploy:
       resources:
         limits:

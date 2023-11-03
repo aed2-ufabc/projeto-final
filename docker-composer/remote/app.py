@@ -27,14 +27,18 @@ class MyHandler(BaseHTTPRequestHandler):
         parsed_url = urlparse(self.path)
         query_params = parse_qs(parsed_url.query)
 
-        if 'q' in query_params:
-            param_value = query_params['q'][0]
-            file_content = read_file(param_value)
-            response_data = {'file_content': file_content}
-            response_body = json.dumps(response_data)
-            self._send_response(200, 'application/json', response_body)
-        else:
+        if 'q' not in query_params:
             self._send_response(400, 'text/plain', 'Missing "q" query parameter')
+            
+        param_value = query_params['q'][0]
+        file_content = read_file(param_value)
+        if file_content is None:
+            self._send_response(404, 'text/plain', 'File not found')
+            return
+        
+        response_data = {'file_content': file_content}
+        response_body = json.dumps(response_data)
+        self._send_response(200, 'application/json', response_body)
 
 def run(port=5001):
     server_address = (hostName, port)
