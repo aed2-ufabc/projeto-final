@@ -1,9 +1,21 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
+import os
 from urllib.parse import urlparse, parse_qs
 
 hostName = "0.0.0.0"
+script_dir = os.path.dirname(os.path.realpath(__file__))
 
+def read_file(file):
+    try:
+        file_path = os.path.join(script_dir, 'files', file + '.txt')
+        with open(file_path, 'r') as file:
+            content = file.read()
+            return content
+    except FileNotFoundError:
+        return None
+    except Exception as e:
+        return None
 class MyHandler(BaseHTTPRequestHandler):
     def _send_response(self, status, content_type, response_body):
         self.send_response(status)
@@ -17,7 +29,8 @@ class MyHandler(BaseHTTPRequestHandler):
 
         if 'q' in query_params:
             param_value = query_params['q'][0]
-            response_data = {'q': param_value}
+            file_content = read_file(param_value)
+            response_data = {'file_content': file_content}
             response_body = json.dumps(response_data)
             self._send_response(200, 'application/json', response_body)
         else:

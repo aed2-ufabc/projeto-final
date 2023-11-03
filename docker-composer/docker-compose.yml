@@ -17,7 +17,7 @@ services:
       resources:
         limits:
           # cpus: '0.001'
-          memory: 200M
+          memory: 30M
   remote:
     build:
       dockerfile: Dockerfile

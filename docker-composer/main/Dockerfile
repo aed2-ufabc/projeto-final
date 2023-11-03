@@ -19,3 +19,4 @@ COPY --from=build-venv /venv /venv
 COPY . /app
 WORKDIR /app
 ENTRYPOINT ["/venv/bin/python3", "app.py"]
+# /venv/bin/python3 app.py
