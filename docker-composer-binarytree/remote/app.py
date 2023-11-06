@@ -2,6 +2,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import os
 from urllib.parse import urlparse, parse_qs
+import time
 
 hostName = "0.0.0.0"
 script_dir = os.path.dirname(os.path.realpath(__file__))
@@ -19,7 +20,7 @@ def read_file(file):
 
 # Construir a árvore trie
 def build_trie(dictionary):
-    print("entrou aqui")
+    print("entrou aqui", flush=True)
     trie = {}
     for word, meaning in dictionary.items():
         node = trie
@@ -60,35 +61,44 @@ class MyHandler(BaseHTTPRequestHandler):
             return
         
         param_value_q = query_params['q'][0]
+
+        start_time = time.time()
         file_content = read_file(param_value_q)
+        print("read_file --- %s seconds ---" % (time.time() - start_time), flush=True)
+
         if file_content is None:
             self._send_response(404, 'text/plain', 'File not found')
             return
         
+        start_time = time.time()
         # Construir a árvore trie a partir do dicionário
         trie = build_trie(file_content)
+        print("build_trie --- %s seconds ---" % (time.time() - start_time), flush=True)
 
         # Pedir ao usuário para inserir uma palavra
         param_value_word = query_params['word'][0]
 
+        start_time = time.time()
         # Procurar a palavra na árvore trie
         meaning = search_word(trie, param_value_word)
+        print("search_word --- %s seconds ---" % (time.time() - start_time), flush=True)
 
+        
         response_body = meaning
         self._send_response(200, 'application/json', response_body)
 
 def run(port=8080):
     server_address = (hostName, port)
-    print("Server started http://%s:%s" % server_address)
+    print("Server started http://%s:%s" % server_address, flush=True)
     webServer = HTTPServer(server_address, MyHandler)
-    print(f'Starting server on port {port}...')
+    print(f'Starting server on port {port}...', flush=True)
     try:
         webServer.serve_forever()
     except KeyboardInterrupt:
         pass
 
     webServer.server_close()
-    print("Server stopped.")
+    print("Server stopped.", flush=True)
 
 if __name__ == '__main__':
     run()
