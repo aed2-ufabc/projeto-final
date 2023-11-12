@@ -1,18 +1,23 @@
 import json
 import requests
 
-def call_api(user_input):
-    host = 'remote3'
+def call_api(user_input, idiom_input):
+    # Verificando a letra digitada, para setar host
+    host = verificar_letra(user_input)
 
-    if user_input == 'a':
+    if idiom_input == "i" and host == 1:
         host = 'remote1'
-    elif user_input == 'b':
+    elif idiom_input == 'i' and host == 2:
         host = 'remote2'
+    elif idiom_input == 'e' and host == 1:
+        host = 'remote3'
+    else:
+        host = 'remote4' 
 
     api_endpoint = 'http://' + host + ':8080'
 
     try:
-        params = {'q': 'dictionary', 'word': user_input}
+        params = {'q': user_input[0].lower(), 'word': user_input}
 
         # Make the API call
         response = requests.get(api_endpoint, params=params)
@@ -32,19 +37,23 @@ def call_api(user_input):
     except Exception as e:
         print("An error occurred:", e)
 
+def verificar_letra(palavra):
+    if palavra and palavra[0].lower() >= 'a' and palavra[0].lower() <= 'm':
+        return 1
+    else:
+        return 2
+
 def main():
     # Pedir ao usuário para inserir o idioma
-    # idiom_input = input("Digite o idioma desejado \nI - Inglês \nE - Espanhol\n\n").lower()
+    idiom_input = input("Digite o idioma desejado \nI - Inglês \nE - Espanhol\n\n").lower()
     
-    # if idiom_input == 'i':
-    #     user_input = input("\nEnter the word you want to search for: ").lower()
-    # elif idiom_input == 'e': 
-    #     user_input = input("\nIngrese la palabra que desea buscar: ").lower()
-      
-    user_input = input("\nEnter the word you want to search for: ").lower()
-    
+    if idiom_input == 'i':
+        user_input = input("\nEnter the word you want to search for: ").lower()
+    elif idiom_input == 'e': 
+        user_input = input("\nIngrese la palabra que desea buscar: ").lower()
+
     # Chamando a API com a entrada do usuário
-    call_api(user_input) 
+    call_api(user_input, idiom_input) 
 
 if __name__ == "__main__":
     main()
