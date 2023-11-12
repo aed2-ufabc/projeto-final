@@ -66,5 +66,22 @@ services:
       resources:
         limits:
           # cpus: '0.001'
-          memory: 100M
+          memory: 20M
+  remote4:
+    build:
+      dockerfile: Dockerfile
+      context: ./remote
+    volumes:
+      # map files from ./remote to /app inside container
+      # every time that something asks to a file in /app inside the container
+      # it will search in ./remote from current directory
+     - ./remote:/app
+     - ./files/remote4:/app/files
+    ports:
+      - 5004:8080
+    deploy:
+      resources:
+        limits:
+          # cpus: '0.001'
+          memory: 20M
    
