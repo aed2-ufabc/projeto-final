@@ -16,55 +16,21 @@ services:
         limits:
           # cpus: '0.001'
           memory: 30M
-  remote1:
-    build:
-      dockerfile: Dockerfile
-      context: ./remote
-    volumes:
-      # map files from ./remote to /app inside container
-      # every time that something asks to a file in /app inside the container
-      # it will search in ./remote from current directory
-     - ./remote:/app
-     - ./files/remote1:/app/files
+  ftpd_server:
+    image: stilliard/pure-ftpd
+    container_name: pure-ftpd
     ports:
-      - 5001:8080
-    deploy:
-      resources:
-        limits:
-          # cpus: '0.001'
-          memory: 20M
-  remote2:
-    build:
-      dockerfile: Dockerfile
-      context: ./remote
+      - "21:21"
+      - "30000-30009:30000-30009"
     volumes:
-      # map files from ./remote to /app inside container
-      # every time that something asks to a file in /app inside the container
-      # it will search in ./remote from current directory
-     - ./remote:/app
-     - ./files/remote2:/app/files
-    ports:
-      - 5002:8080
-    deploy:
-      resources:
-        limits:
-          # cpus: '0.001'
-          memory: 20M
-  remote3:
-    build:
-      dockerfile: Dockerfile
-      context: ./remote
-    volumes:
-      # map files from ./remote to /app inside container
-      # every time that something asks to a file in /app inside the container
-      # it will search in ./remote from current directory
-     - ./remote:/app
-     - ./files/remote3:/app/files
-    ports:
-      - 5003:8080
-    deploy:
-      resources:
-        limits:
-          # cpus: '0.001'
-          memory: 100M
+      - './files/remote1:/home/username/'
+      - './files/pass:/etc/pure-ftpd/passwd'
+    environment:
+      PUBLICHOST: "localhost"
+      FTP_USER_NAME: username
+      FTP_USER_PASS: mypass
+      FTP_USER_HOME: /home/username
+    restart: always
+ 
+   
    

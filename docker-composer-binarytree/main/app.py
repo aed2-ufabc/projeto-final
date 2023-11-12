@@ -1,5 +1,32 @@
 import json
-import requests
+from ftplib import FTP
+
+# Example usage
+ftp_host = 'localhost'
+ftp_user = 'username'
+ftp_password = 'mypass'
+remote_file_path = '/a/a.json'
+local_file_path = 'local_file.json'
+
+def download_file(ftp_host, ftp_user, ftp_password, remote_file_path, local_file_path):
+    try:
+        # Connect to the FTP server
+        with FTP(ftp_host) as ftp:
+            # Log in
+            ftp.login(user=ftp_user, passwd=ftp_password)
+
+            # Change to the appropriate directory if needed
+            # ftp.cwd('/path/to/remote/directory')
+            # Open a local file for writing in binary mode
+            with open(local_file_path, 'wb') as local_file:
+                # Retrieve the remote file
+                ftp.retrbinary('RETR ' + remote_file_path, local_file.write)
+
+            print(f"File '{remote_file_path}' downloaded successfully to '{local_file_path}'")
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
 
 def call_api(user_input):
     host = 'remote3'
@@ -12,23 +39,7 @@ def call_api(user_input):
     api_endpoint = 'http://' + host + ':8080'
 
     try:
-        params = {'q': 'dictionary', 'word': user_input}
-
-        # Make the API call
-        response = requests.get(api_endpoint, params=params)
-
-        # Check if the request was successful (status code 200)
-        if response.status_code == 200:
-            meaning = response.content
-
-            # Exibir o significado, se encontrado
-            if meaning:
-                print(f'O significado de "{user_input}" é: {meaning}')
-            else:
-                print(f'A palavra "{user_input}" não foi encontrada no dicionário.')
-        else:
-            print("Error:", response.status_code, response.text)
-
+        download_file(ftp_host, ftp_user, ftp_password, remote_file_path, local_file_path)
     except Exception as e:
         print("An error occurred:", e)
 
