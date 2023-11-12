@@ -1,6 +1,53 @@
 version: '3'
 services:
+  remote1:
+    image: stilliard/pure-ftpd
+    ## uncomment this to connect using local machine
+    ports:
+      - "21:21"
+      - "20:20"
+      - "30000-30009:30000-30009"
+    volumes:
+      - './files/remote1:/home/username/'
+      - './files/pass:/etc/pure-ftpd/passwd'
+    environment:
+      PUBLICHOST: "0.0.0.0"
+      FTP_USER_NAME: username
+      FTP_USER_PASS: mypass
+      FTP_USER_HOME: /home/username
+      FTP_PASSIVE_PORTS: 30000:30009
+    restart: always
+  remote2:
+    image: stilliard/pure-ftpd
+
+    volumes:
+      - './files/remote2:/home/username/'
+      - './files/pass:/etc/pure-ftpd/passwd'
+    environment:
+      PUBLICHOST: "0.0.0.0"
+      FTP_USER_NAME: username
+      FTP_USER_PASS: mypass
+      FTP_USER_HOME: /home/username
+      FTP_PASSIVE_PORTS: 30000:30009
+    restart: always
+  remote3:
+    image: stilliard/pure-ftpd
+
+    volumes:
+      - './files/remote3:/home/username/'
+      - './files/pass:/etc/pure-ftpd/passwd'
+    environment:
+      PUBLICHOST: "0.0.0.0"
+      FTP_USER_NAME: username
+      FTP_USER_PASS: mypass
+      FTP_USER_HOME: /home/username
+      FTP_PASSIVE_PORTS: 30000:30009
+    restart: always
   main:
+    depends_on:
+      - remote1
+      - remote2
+      - remote3
     stdin_open: true # docker run -i
     tty: true        # docker run -t
     build:
@@ -15,22 +62,4 @@ services:
       resources:
         limits:
           # cpus: '0.001'
-          memory: 30M
-  ftpd_server:
-    image: stilliard/pure-ftpd
-    container_name: pure-ftpd
-    ports:
-      - "21:21"
-      - "30000-30009:30000-30009"
-    volumes:
-      - './files/remote1:/home/username/'
-      - './files/pass:/etc/pure-ftpd/passwd'
-    environment:
-      PUBLICHOST: "localhost"
-      FTP_USER_NAME: username
-      FTP_USER_PASS: mypass
-      FTP_USER_HOME: /home/username
-    restart: always
- 
-   
-   
+          memory: 20M

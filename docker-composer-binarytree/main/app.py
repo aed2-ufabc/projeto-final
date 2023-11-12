@@ -1,17 +1,15 @@
 import json
 from ftplib import FTP
 from io import BytesIO
-# Example usage
-ftp_host = 'localhost'
+
 ftp_user = 'username'
 ftp_password = 'mypass'
-remote_file_path = '/a/a.json'
-local_file_path = 'local_file.json'
 
-def download_file(ftp_host, ftp_user, ftp_password, remote_file_path, local_file_path):
+def download_file(ftp_host, ftp_user, ftp_password, remote_file_path):
     try:
         # Connect to the FTP server
-        with FTP(ftp_host) as ftp:
+        with FTP() as ftp:
+            ftp.connect(ftp_host, 21)
             # Log in
             ftp.login(user=ftp_user, passwd=ftp_password)
 
@@ -39,17 +37,17 @@ def download_file(ftp_host, ftp_user, ftp_password, remote_file_path, local_file
 
 
 def call_api(user_input):
+    first_letter = user_input[0]
     host = 'remote3'
 
-    if user_input == 'a':
+    if first_letter == 'a':
         host = 'remote1'
-    elif user_input == 'b':
+    elif first_letter == 'b':
         host = 'remote2'
 
-    api_endpoint = 'http://' + host + ':8080'
-
+    remote_file_path = '/'+first_letter+'/file.json'
     try:
-        download_file(ftp_host, ftp_user, ftp_password, remote_file_path, local_file_path)
+        download_file(host, ftp_user, ftp_password, remote_file_path)
     except Exception as e:
         print("An error occurred:", e)
 
