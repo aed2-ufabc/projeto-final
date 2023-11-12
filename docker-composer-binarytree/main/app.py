@@ -28,9 +28,12 @@ def call_api(user_input, idiom_input):
 
             # Exibir o significado, se encontrado
             if meaning:
-                print(f'O significado de "{user_input}" é: {meaning}')
+                print(f'"{user_input}": {meaning}')
             else:
-                print(f'A palavra "{user_input}" não foi encontrada no dicionário.')
+                if idiom_input == "i":
+                    print(f'The word "{user_input}" was not found in the dictionary.')
+                elif idiom_input == "e":
+                    print(f'La palabra "{user_input}" no se encontró en el diccionario.')
         else:
             print("Error:", response.status_code, response.text)
 
@@ -44,16 +47,24 @@ def verificar_letra(palavra):
         return 2
 
 def main():
-    # Pedir ao usuário para inserir o idioma
-    idiom_input = input("Digite o idioma desejado \nI - Inglês \nE - Espanhol\n\n").lower()
-    
-    if idiom_input == 'i':
-        user_input = input("\nEnter the word you want to search for: ").lower()
-    elif idiom_input == 'e': 
-        user_input = input("\nIngrese la palabra que desea buscar: ").lower()
+    idiom_input = 'i'
 
-    # Chamando a API com a entrada do usuário
-    call_api(user_input, idiom_input) 
-
+    while(idiom_input.lower() != 's'):
+        # Pedir ao usuário para inserir o idioma
+        idiom_input = input("\nDigite o idioma desejado \nI - Inglês \nE - Espanhol \nS - Sair\n\n").lower()
+        
+        if idiom_input == 'i':
+            user_input = input("\nEnter the word you want to search for: ").lower()
+            # Chamando a API com a entrada do usuário
+            call_api(user_input, idiom_input) 
+        
+        elif idiom_input == 'e': 
+            user_input = input("\nIngrese la palabra que desea buscar: ").lower()
+            # Chamando a API com a entrada do usuário
+            call_api(user_input, idiom_input) 
+        
+        elif idiom_input == 's':
+            print("\nPrograma encerrado.")
+        
 if __name__ == "__main__":
     main()
