@@ -1,9 +1,48 @@
 import json
 from ftplib import FTP
 from io import BytesIO
+import os
 
 ftp_user = 'username'
 ftp_password = 'mypass'
+
+
+script_dir = os.path.dirname(os.path.realpath(__file__))
+
+# Construir a árvore trie
+def build_trie(dictionary):
+    print("entrou aqui")
+    trie = {}
+    for word, meaning in dictionary.items():
+        node = trie
+        for char in word:
+            if char not in node:
+                node[char] = {}
+            node = node[char]
+        node['meaning'] = meaning
+    return trie
+
+# Função para procurar uma palavra na árvore trie
+def search_word(trie, word):
+    node = trie
+    for char in word:
+        if char in node:
+            node = node[char]
+        else:
+            return None
+    return node.get('meaning', None)
+
+def read_file(file):
+    try:
+        file_path = os.path.join(script_dir, 'files', file + '.json')
+        with open(file_path, 'r', encoding='utf-8') as file:
+            dictionary = json.load(file)
+            return dictionary
+    except FileNotFoundError:
+        return None
+    except Exception as e:
+        return None
+
 
 def download_file(ftp_host, ftp_user, ftp_password, remote_file_path):
     try:
