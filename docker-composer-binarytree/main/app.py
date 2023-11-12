@@ -1,34 +1,92 @@
 import json
-import requests
+from ftplib import FTP
+from io import BytesIO
+import os
+
+ftp_user = 'username'
+ftp_password = 'mypass'
+
+
+script_dir = os.path.dirname(os.path.realpath(__file__))
+
+# Construir a árvore trie
+def build_trie(dictionary):
+    print("entrou aqui")
+    trie = {}
+    for word, meaning in dictionary.items():
+        node = trie
+        for char in word:
+            if char not in node:
+                node[char] = {}
+            node = node[char]
+        node['meaning'] = meaning
+    return trie
+
+# Função para procurar uma palavra na árvore trie
+def search_word(trie, word):
+    node = trie
+    for char in word:
+        if char in node:
+            node = node[char]
+        else:
+            return None
+    return node.get('meaning', None)
+
+def read_file(file):
+    try:
+        file_path = os.path.join(script_dir, 'files', file + '.json')
+        with open(file_path, 'r', encoding='utf-8') as file:
+            dictionary = json.load(file)
+            return dictionary
+    except FileNotFoundError:
+        return None
+    except Exception as e:
+        return None
+
+
+def download_file(ftp_host, ftp_user, ftp_password, remote_file_path):
+    try:
+        # Connect to the FTP server
+        with FTP() as ftp:
+            ftp.connect(ftp_host, 21)
+            # Log in
+            ftp.login(user=ftp_user, passwd=ftp_password)
+
+            # Change to the appropriate directory if needed
+            # ftp.cwd('/path/to/remote/directory')
+            # Open a local file for writing in binary mode
+           # Use BytesIO to store the file content in memory
+            file_content = BytesIO()
+
+            # Retrieve the remote file and write it to BytesIO
+            ftp.retrbinary('RETR ' + remote_file_path, file_content.write)
+
+            # Move the cursor to the beginning of the BytesIO buffer
+            file_content.seek(0)
+
+            # Read the content of BytesIO into a JSON variable
+            json_data = json.load(file_content)
+
+            # Print or use the JSON data as needed
+            print("JSON Data:")
+            print(json_data)
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
 
 def call_api(user_input):
+    first_letter = user_input[0]
     host = 'remote3'
 
-    if user_input == 'a':
+    if first_letter == 'a':
         host = 'remote1'
-    elif user_input == 'b':
+    elif first_letter == 'b':
         host = 'remote2'
 
-    api_endpoint = 'http://' + host + ':8080'
-
+    remote_file_path = '/'+first_letter+'/file.json'
     try:
-        params = {'q': 'dictionary', 'word': user_input}
-
-        # Make the API call
-        response = requests.get(api_endpoint, params=params)
-
-        # Check if the request was successful (status code 200)
-        if response.status_code == 200:
-            meaning = response.content
-
-            # Exibir o significado, se encontrado
-            if meaning:
-                print(f'O significado de "{user_input}" é: {meaning}')
-            else:
-                print(f'A palavra "{user_input}" não foi encontrada no dicionário.')
-        else:
-            print("Error:", response.status_code, response.text)
-
+        download_file(host, ftp_user, ftp_password, remote_file_path)
     except Exception as e:
         print("An error occurred:", e)
 

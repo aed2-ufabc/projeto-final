@@ -1,6 +1,37 @@
 version: '3'
 services:
+  remote1:  &remote_template
+    image: stilliard/pure-ftpd
+    ## uncomment this to connect using local machine
+    ports:
+      - "21:21"
+      - "20:20"
+      - "30000-30009:30000-30009"
+    volumes:
+      - './files/remote1:/home/username/'
+      - './files/pass:/etc/pure-ftpd/passwd'
+    environment:
+      PUBLICHOST: "0.0.0.0"
+      FTP_USER_NAME: username
+      FTP_USER_PASS: mypass
+      FTP_USER_HOME: /home/username
+      FTP_PASSIVE_PORTS: 30000:30009
+    restart: always
+  remote2:
+    <<: *remote_template
+    ports: []
+    volumes:
+      - './files/remote2:/home/username/'
+  remote3:
+    <<: *remote_template
+    ports: []
+    volumes:
+      - './files/remote3:/home/username/'
   main:
+    depends_on:
+      - remote1
+      - remote2
+      - remote3
     stdin_open: true # docker run -i
     tty: true        # docker run -t
     build:
@@ -15,56 +46,4 @@ services:
       resources:
         limits:
           # cpus: '0.001'
-          memory: 30M
-  remote1:
-    build:
-      dockerfile: Dockerfile
-      context: ./remote
-    volumes:
-      # map files from ./remote to /app inside container
-      # every time that something asks to a file in /app inside the container
-      # it will search in ./remote from current directory
-     - ./remote:/app
-     - ./files/remote1:/app/files
-    ports:
-      - 5001:8080
-    deploy:
-      resources:
-        limits:
-          # cpus: '0.001'
           memory: 20M
-  remote2:
-    build:
-      dockerfile: Dockerfile
-      context: ./remote
-    volumes:
-      # map files from ./remote to /app inside container
-      # every time that something asks to a file in /app inside the container
-      # it will search in ./remote from current directory
-     - ./remote:/app
-     - ./files/remote2:/app/files
-    ports:
-      - 5002:8080
-    deploy:
-      resources:
-        limits:
-          # cpus: '0.001'
-          memory: 20M
-  remote3:
-    build:
-      dockerfile: Dockerfile
-      context: ./remote
-    volumes:
-      # map files from ./remote to /app inside container
-      # every time that something asks to a file in /app inside the container
-      # it will search in ./remote from current directory
-     - ./remote:/app
-     - ./files/remote3:/app/files
-    ports:
-      - 5003:8080
-    deploy:
-      resources:
-        limits:
-          # cpus: '0.001'
-          memory: 100M
-   
