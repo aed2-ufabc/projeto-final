@@ -1,6 +1,6 @@
 import json
 from ftplib import FTP
-
+from io import BytesIO
 # Example usage
 ftp_host = 'localhost'
 ftp_user = 'username'
@@ -18,11 +18,21 @@ def download_file(ftp_host, ftp_user, ftp_password, remote_file_path, local_file
             # Change to the appropriate directory if needed
             # ftp.cwd('/path/to/remote/directory')
             # Open a local file for writing in binary mode
-            with open(local_file_path, 'wb') as local_file:
-                # Retrieve the remote file
-                ftp.retrbinary('RETR ' + remote_file_path, local_file.write)
+           # Use BytesIO to store the file content in memory
+            file_content = BytesIO()
 
-            print(f"File '{remote_file_path}' downloaded successfully to '{local_file_path}'")
+            # Retrieve the remote file and write it to BytesIO
+            ftp.retrbinary('RETR ' + remote_file_path, file_content.write)
+
+            # Move the cursor to the beginning of the BytesIO buffer
+            file_content.seek(0)
+
+            # Read the content of BytesIO into a JSON variable
+            json_data = json.load(file_content)
+
+            # Print or use the JSON data as needed
+            print("JSON Data:")
+            print(json_data)
 
     except Exception as e:
         print(f"An error occurred: {e}")
