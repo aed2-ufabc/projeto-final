@@ -11,7 +11,6 @@ script_dir = os.path.dirname(os.path.realpath(__file__))
 
 # Construir a árvore trie
 def build_trie(dictionary):
-    print("entrou aqui")
     trie = {}
     for word, meaning in dictionary.items():
         node = trie
