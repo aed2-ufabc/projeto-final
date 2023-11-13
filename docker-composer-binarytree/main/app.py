@@ -6,9 +6,6 @@ import os
 ftp_user = 'username'
 ftp_password = 'mypass'
 
-
-script_dir = os.path.dirname(os.path.realpath(__file__))
-
 # Construir a árvore trie
 def build_trie(dictionary):
     trie = {}
@@ -30,17 +27,6 @@ def search_word(trie, word):
         else:
             return None
     return node.get('meaning', None)
-
-def read_file(file):
-    try:
-        file_path = os.path.join(script_dir, 'files', file + '.json')
-        with open(file_path, 'r', encoding='utf-8') as file:
-            dictionary = json.load(file)
-            return dictionary
-    except FileNotFoundError:
-        return None
-    except Exception as e:
-        return None
 
 
 def download_file(ftp_host, ftp_user, ftp_password, remote_file_path):
@@ -91,8 +77,6 @@ def call_api(user_input, idiom_input):
     else:
         host = 'remote4' 
     
-    print(host)
-
     remote_file_path = '/'+first_letter+'.json'
     try:
         json_data = download_file(host, ftp_user, ftp_password, remote_file_path)
