@@ -84,13 +84,21 @@ def call_api(user_input, idiom_input):
         host = 'remote3'
     else:
         host = 'remote4' 
+    
+    print(host)
 
     remote_file_path = '/'+first_letter+'.json'
     try:
         json_data = download_file(host, ftp_user, ftp_password, remote_file_path)
         trie = build_trie(json_data)
         meaning = search_word(trie, user_input)
-        print(meaning)
+        if meaning:
+                print(f'"{user_input}": {meaning}')
+        else:
+            if idiom_input == "i":
+                print(f'The word "{user_input}" was not found in the dictionary.')
+            elif idiom_input == "e":
+                print(f'La palabra "{user_input}" no se encontró en el diccionario.')
     except Exception as e:
         print("An error occurred:", e)
 
@@ -101,16 +109,24 @@ def verificar_letra(word, first_letter):
         return 2
 
 def main():
-    # Pedir ao usuário para inserir o idioma
-    idiom_input = input("Digite o idioma desejado \nI - Inglês \nE - Espanhol\n\n").lower()
-    
-    if idiom_input == 'i':
-        user_input = input("\nEnter the word you want to search for: ").lower()
-    elif idiom_input == 'e': 
-        user_input = input("\nIngrese la palabra que desea buscar: ").lower()
+    idiom_input = 'i'
 
-    # Chamando a API com a entrada do usuário
-    call_api(user_input, idiom_input) 
-
+    while(idiom_input.lower() != 's'):
+        # Pedir ao usuário para inserir o idioma
+        idiom_input = input("\nDigite o idioma desejado \nI - Inglês \nE - Espanhol \nS - Sair\n\n").lower()
+        
+        if idiom_input == 'i':
+            user_input = input("\nEnter the word you want to search for: ").lower()
+            # Chamando a API com a entrada do usuário
+            call_api(user_input, idiom_input) 
+        
+        elif idiom_input == 'e': 
+            user_input = input("\nIngrese la palabra que desea buscar: ").lower()
+            # Chamando a API com a entrada do usuário
+            call_api(user_input, idiom_input) 
+        
+        elif idiom_input == 's':
+            print("\nPrograma encerrado.")
+        
 if __name__ == "__main__":
     main()

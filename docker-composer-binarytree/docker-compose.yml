@@ -27,11 +27,17 @@ services:
     ports: []
     volumes:
       - './files/remote3:/home/username/'
+  remote4:
+    <<: *remote_template
+    ports: []
+    volumes:
+      - './files/remote4:/home/username/'
   main:
     depends_on:
       - remote1
       - remote2
       - remote3
+      - remote4
     stdin_open: true # docker run -i
     tty: true        # docker run -t
     build:
