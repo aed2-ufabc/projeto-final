@@ -69,8 +69,14 @@ def download_file(ftp_host, ftp_user, ftp_password, remote_file_path):
         
     except Exception as e:
         print(f"An error occurred: {e}")
+        return None
 
-
+def not_found_print(user_input, idiom_input):
+    if idiom_input == "e":
+        print(f'La palabra "{user_input}" no se encontró en el diccionario.')
+        return 
+    print(f'The word "{user_input}" was not found in the dictionary.')
+    
 def call_api(user_input, idiom_input):
     # Verificando a letra digitada, para setar host
     first_letter = user_input[0].lower()
@@ -90,15 +96,17 @@ def call_api(user_input, idiom_input):
     remote_file_path = '/'+first_letter+'.json'
     try:
         json_data = download_file(host, ftp_user, ftp_password, remote_file_path)
+        if json_data == None:
+            not_found_print(user_input, idiom_input)
+            return
+
         trie = build_trie(json_data)
         meaning = search_word(trie, user_input)
         if meaning:
-                print(f'"{user_input}": {meaning}')
-        else:
-            if idiom_input == "i":
-                print(f'The word "{user_input}" was not found in the dictionary.')
-            elif idiom_input == "e":
-                print(f'La palabra "{user_input}" no se encontró en el diccionario.')
+            print(f'"{user_input}": {meaning}')
+            return
+        
+        not_found_print(user_input, idiom_input)
     except Exception as e:
         print("An error occurred:", e)
 
