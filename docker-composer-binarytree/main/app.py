@@ -51,21 +51,22 @@ def download_file(ftp_host, ftp_user, ftp_password, remote_file_path):
 
             # Read the content of BytesIO into a JSON variable
             json_data = json.load(file_content)
+            ftp.quit()
             return json_data
         
     except Exception as e:
-        print(f"An error occurred: {e}")
+        print(f"An error occurred: {e}", flush=True)
         return None
 
 def not_found_print(user_input, idiom_input):
     if idiom_input == "e":
-        print(f'La palabra "{user_input}" no se encontró en el diccionario.')
+        print(f'La palabra "{user_input}" no se encontró en el diccionario.', flush=True)
         return 
-    print(f'The word "{user_input}" was not found in the dictionary.')
+    print(f'The word "{user_input}" was not found in the dictionary.', flush=True)
     
 def call_api(user_input, idiom_input):
     # Verificando a letra digitada, para setar host
-    first_letter = user_input[0].lower()
+    first_letter = user_input[0]
     host = verificar_letra(user_input, first_letter)
 
     if idiom_input == "i" and host == 1:
@@ -92,7 +93,7 @@ def call_api(user_input, idiom_input):
         
         not_found_print(user_input, idiom_input)
     except Exception as e:
-        print("An error occurred:", e)
+        print("An error occurred:", e, flush=True)
 
 def verificar_letra(word, first_letter):
     if word and first_letter >= 'a' and first_letter <= 'm':
@@ -110,15 +111,15 @@ def main():
         if idiom_input == 'i':
             user_input = input("\nEnter the word you want to search for: ").lower()
             # Chamando a API com a entrada do usuário
-            call_api(user_input, idiom_input) 
+            call_api(user_input.strip(), idiom_input) 
         
         elif idiom_input == 'e': 
             user_input = input("\nIngrese la palabra que desea buscar: ").lower()
             # Chamando a API com a entrada do usuário
-            call_api(user_input, idiom_input) 
+            call_api(user_input.strip(), idiom_input) 
         
         elif idiom_input == 's':
-            print("\nPrograma encerrado.")
+            print("\nPrograma encerrado.", flush=True)
         
 if __name__ == "__main__":
     main()
