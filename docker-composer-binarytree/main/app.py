@@ -65,43 +65,68 @@ def download_file(ftp_host, ftp_user, ftp_password, remote_file_path):
 
             # Read the content of BytesIO into a JSON variable
             json_data = json.load(file_content)
-
-            # Print or use the JSON data as needed
-            print("JSON Data:")
-            print(json_data)
-
+            return json_data
+        
     except Exception as e:
         print(f"An error occurred: {e}")
 
 
-def call_api(user_input):
-    first_letter = user_input[0]
-    host = 'remote3'
+def call_api(user_input, idiom_input):
+    # Verificando a letra digitada, para setar host
+    first_letter = user_input[0].lower()
+    host = verificar_letra(user_input, first_letter)
 
-    if first_letter == 'a':
+    if idiom_input == "i" and host == 1:
         host = 'remote1'
-    elif first_letter == 'b':
+    elif idiom_input == 'i' and host == 2:
         host = 'remote2'
+    elif idiom_input == 'e' and host == 1:
+        host = 'remote3'
+    else:
+        host = 'remote4' 
+    
+    print(host)
 
-    remote_file_path = '/'+first_letter+'/file.json'
+    remote_file_path = '/'+first_letter+'.json'
     try:
-        download_file(host, ftp_user, ftp_password, remote_file_path)
+        json_data = download_file(host, ftp_user, ftp_password, remote_file_path)
+        trie = build_trie(json_data)
+        meaning = search_word(trie, user_input)
+        if meaning:
+                print(f'"{user_input}": {meaning}')
+        else:
+            if idiom_input == "i":
+                print(f'The word "{user_input}" was not found in the dictionary.')
+            elif idiom_input == "e":
+                print(f'La palabra "{user_input}" no se encontró en el diccionario.')
     except Exception as e:
         print("An error occurred:", e)
 
-def main():
-    # Pedir ao usuário para inserir o idioma
-    # idiom_input = input("Digite o idioma desejado \nI - Inglês \nE - Espanhol\n\n").lower()
-    
-    # if idiom_input == 'i':
-    #     user_input = input("\nEnter the word you want to search for: ").lower()
-    # elif idiom_input == 'e': 
-    #     user_input = input("\nIngrese la palabra que desea buscar: ").lower()
-      
-    user_input = input("\nEnter the word you want to search for: ").lower()
-    
-    # Chamando a API com a entrada do usuário
-    call_api(user_input) 
+def verificar_letra(word, first_letter):
+    if word and first_letter >= 'a' and first_letter <= 'm':
+        return 1
+    else:
+        return 2
 
+def main():
+    idiom_input = 'i'
+
+    while(idiom_input.lower() != 's'):
+        # Pedir ao usuário para inserir o idioma
+        idiom_input = input("\nDigite o idioma desejado \nI - Inglês \nE - Espanhol \nS - Sair\n\n").lower()
+        
+        if idiom_input == 'i':
+            user_input = input("\nEnter the word you want to search for: ").lower()
+            # Chamando a API com a entrada do usuário
+            call_api(user_input, idiom_input) 
+        
+        elif idiom_input == 'e': 
+            user_input = input("\nIngrese la palabra que desea buscar: ").lower()
+            # Chamando a API com a entrada do usuário
+            call_api(user_input, idiom_input) 
+        
+        elif idiom_input == 's':
+            print("\nPrograma encerrado.")
+        
 if __name__ == "__main__":
     main()
