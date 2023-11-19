@@ -41,9 +41,9 @@ def suggest_similar_words(root, word, max_distance):
                 similar_words.append(current_word)
 
         if len(current_word) < len(word):
+            if not hasattr(node, 'items'):
+                return
             for char, next_node in node.items():
-                if isinstance(next_node, str):
-                    return
                 cost = 0 if char == word[len(current_word)] else 1
                 dfs(next_node, current_word + char, distance + cost)
 
@@ -80,12 +80,10 @@ def download_file(ftp_host, ftp_user, ftp_password, remote_file_path):
 
             # Move the cursor to the beginning of the BytesIO buffer
             file_content.seek(0)
-
-            # Read the content of BytesIO into a JSON variable
-            json_data = json.load(file_content)
             ftp.quit()
-            return json_data
-        
+            # Read the content of BytesIO into a JSON variable
+            return json.load(file_content)
+           
     except Exception as e:
         print(f"An error occurred: {e}", flush=True)
         return None
