@@ -2,12 +2,80 @@ import time
 import csv
 from ftplib import FTP
 from pygtrie import StringTrie
+from collections import defaultdict
+from unidecode import unidecode
 
 ftp_user = 'username'
 ftp_password = 'mypass'
 json_data = None
 last_first_letter = None
 last_idiom = None
+letter_mapping = {}
+
+def generate_letter_mapping(words):
+    global letter_mapping
+    letter_mapping = {}
+    unique_value = 0
+
+    for word in words:
+        for letter in word:
+            if letter not in letter_mapping:
+                letter_mapping[letter] = unique_value
+                unique_value += 1
+
+    return letter_mapping
+
+def count_keys(input_dict):
+    if not isinstance(input_dict, dict):
+        raise ValueError("Input must be a dictionary")
+    
+    key_count = len(input_dict)
+    return key_count
+
+class TrieNode:
+    def __init__(self):
+        self.children = [None] * count_keys(letter_mapping)  # Assuming only lowercase English letters
+        self.is_end_of_word = False
+
+class Trie:
+    global letter_mapping
+
+    def __init__(self):
+        self.root = TrieNode()
+
+    def _char_to_index(self, char):
+        return ord(char) - ord('a')
+
+    def insert(self, word):
+        node = self.root
+        for char in word:
+            index = letter_mapping[char]
+            if not node.children[index]:
+                node.children[index] = TrieNode()
+            node = node.children[index]
+        node.is_end_of_word = True
+
+    def search(self, word):
+        node = self.root
+        for char in word:
+            index = letter_mapping[char]
+            if not node.children[index]:
+                return False
+            node = node.children[index]
+        return node is not None and node.is_end_of_word
+
+    def starts_with_prefix(self, prefix):
+        node = self.root
+        for char in prefix:
+            index = letter_mapping[char]
+            if not node.children[index]:
+                return False
+            node = node.children[index]
+        return node is not None
+
+
+# Example usage:
+
 
 def suggest_similar_words(root, word, max_distance):
     similar_words = []
@@ -47,7 +115,6 @@ def download_file(ftp_host, ftp_user, ftp_password, remote_file_path):
             ftp.login(user=ftp_user, passwd=ftp_password)
             ftp.encoding='utf-8'
             start = time.time()
-            trie = StringTrie()
 
             temp = './temp.csv'
             with open(temp, 'wb') as fp:
@@ -56,8 +123,17 @@ def download_file(ftp_host, ftp_user, ftp_password, remote_file_path):
 
             with open(temp, 'r')as fp:
                 reader = csv.reader(fp, delimiter=",")
+                words = []
                 for _, line in enumerate(reader):
-                    trie[line[0]] = True
+                    words.append(line[0])
+                
+                generate_letter_mapping(words)
+                print(letter_mapping, flush=True)
+                print(letter_mapping['b'])
+                trie = Trie()
+                for word in words:
+                    trie.insert(word)
+                fp.close()
 
             end = time.time()
             ftp.quit()
@@ -109,7 +185,7 @@ def call_api(user_input, idiom_input):
                 not_found_print(user_input, idiom_input)
                 return
         
-        meaning = trie.has_key(user_input)
+        meaning = trie.search(user_input)
         if meaning:
             print(f'"{user_input}": {meaning}', flush=True)
             return
