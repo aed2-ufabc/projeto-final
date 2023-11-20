@@ -1,6 +1,9 @@
-import json
+import time
+from queue import Queue
+from threading import Thread
+import csv
 from ftplib import FTP
-from io import BytesIO
+from pygtrie import StringTrie
 
 ftp_user = 'username'
 ftp_password = 'mypass'
@@ -8,27 +11,23 @@ json_data = None
 last_first_letter = None
 last_idiom = None
 
-# Construir a árvore trie
-def build_trie(dictionary):
-    trie = {}
-    for word, meaning in dictionary.items():
-        node = trie
-        for char in word:
-            if char not in node:
-                node[char] = {}
-            node = node[char]
-        node['meaning'] = meaning
-    return trie
+class LineQueue:
+    _queue = Queue(50)
 
-# Função para procurar uma palavra na árvore trie
-def search_word(trie, word):
-    node = trie
-    for char in word:
-        if char in node:
-            node = node[char]
-        else:
-            return None
-    return node.get('meaning', None)
+    def add(self, s):
+        self._queue.put(s)
+
+    def done(self):
+        self._queue.put(False)
+
+    def __iter__(self):
+        while True:
+            s = self._queue.get()
+            if s == False:
+                break
+            yield s
+
+
 
 def suggest_similar_words(root, word, max_distance):
     similar_words = []
@@ -60,33 +59,36 @@ def suggest_similar_words(root, word, max_distance):
 
     return filtered
 
-
 def download_file(ftp_host, ftp_user, ftp_password, remote_file_path):
+
     try:
-        # Connect to the FTP server
         with FTP() as ftp:
             ftp.connect(ftp_host, 21)
-            # Log in
             ftp.login(user=ftp_user, passwd=ftp_password)
+            ftp.encoding='utf-8'
 
-            # Change to the appropriate directory if needed
-            # ftp.cwd('/path/to/remote/directory')
-            # Open a local file for writing in binary mode
-            # Use BytesIO to store the file content in memory
-            file_content = BytesIO()
+            q = LineQueue()
 
-            # Retrieve the remote file and write it to BytesIO
-            ftp.retrbinary('RETR ' + remote_file_path, file_content.write)
+            def download():
+                ftp.retrlines('RETR ' + remote_file_path, q.add)
+                q.done()
 
-            # Move the cursor to the beginning of the BytesIO buffer
-            file_content.seek(0)
+            thread = Thread(target=download)
+            thread.start()
+            start = time.time()
+            trie = StringTrie()
+            for entry in csv.reader(q):
+                if len(entry) != 0:
+                    trie[entry[0]] = True
+            end = time.time()
+            thread.join()
             ftp.quit()
-            # Read the content of BytesIO into a JSON variable
-            return json.load(file_content)
+            print(f"Downloaded in {end - start} seconds", flush=True)
+            return trie
            
     except Exception as e:
         print(f"An error occurred: {e}", flush=True)
-        return None
+        return False
 
 def not_found_print(user_input, idiom_input):
     if idiom_input == "e":
@@ -114,24 +116,22 @@ def get_host(user_input, idiom_input, first_letter):
 
 def call_api(user_input, idiom_input):
     global last_first_letter  
-    global json_data 
+    global trie 
     global last_idiom
 
     try:
         first_letter = user_input[0]
         if first_letter != last_first_letter and last_idiom != idiom_input:
-            remote_file_path = '/'+first_letter+'.json'
+            remote_file_path = '/'+first_letter+'.csv'
             last_first_letter = first_letter
             last_idiom = idiom_input
             host = get_host(user_input, idiom_input, first_letter)
-            json_data = download_file(host, ftp_user, ftp_password, remote_file_path)
-
-        if json_data == None:
-            not_found_print(user_input, idiom_input)
-            return
-
-        trie = build_trie(json_data)
-        meaning = search_word(trie, user_input)
+            trie = download_file(host, ftp_user, ftp_password, remote_file_path)
+            if trie == False:
+                not_found_print(user_input, idiom_input)
+                return
+        
+        meaning = trie.has_key(user_input)
         if meaning:
             print(f'"{user_input}": {meaning}', flush=True)
             return
