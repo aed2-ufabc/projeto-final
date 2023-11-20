@@ -1,6 +1,4 @@
 import time
-from queue import Queue
-from threading import Thread
 import csv
 from ftplib import FTP
 from pygtrie import StringTrie
@@ -10,24 +8,6 @@ ftp_password = 'mypass'
 json_data = None
 last_first_letter = None
 last_idiom = None
-
-class LineQueue:
-    _queue = Queue(50)
-
-    def add(self, s):
-        self._queue.put(s)
-
-    def done(self):
-        self._queue.put(False)
-
-    def __iter__(self):
-        while True:
-            s = self._queue.get()
-            if s == False:
-                break
-            yield s
-
-
 
 def suggest_similar_words(root, word, max_distance):
     similar_words = []
@@ -66,22 +46,20 @@ def download_file(ftp_host, ftp_user, ftp_password, remote_file_path):
             ftp.connect(ftp_host, 21)
             ftp.login(user=ftp_user, passwd=ftp_password)
             ftp.encoding='utf-8'
-
-            q = LineQueue()
-
-            def download():
-                ftp.retrlines('RETR ' + remote_file_path, q.add)
-                q.done()
-
-            thread = Thread(target=download)
-            thread.start()
             start = time.time()
             trie = StringTrie()
-            for entry in csv.reader(q):
-                if len(entry) != 0:
-                    trie[entry[0]] = True
+
+            temp = './temp.csv'
+            with open(temp, 'wb') as fp:
+                ftp.retrbinary('RETR ' + remote_file_path, fp.write)
+                fp.close()
+
+            with open(temp, 'r')as fp:
+                reader = csv.reader(fp, delimiter=",")
+                for _, line in enumerate(reader):
+                    trie[line[0]] = True
+
             end = time.time()
-            thread.join()
             ftp.quit()
             print(f"Downloaded in {end - start} seconds", flush=True)
             return trie
