@@ -17,6 +17,11 @@ services:
       FTP_USER_HOME: /home/username
       FTP_PASSIVE_PORTS: 30000:30009
     restart: always
+    deploy:
+      resources:
+        limits:
+          # cpus: '0.001'
+          memory: 16M
   remote2:
     <<: *remote_template
     ports: []
@@ -52,4 +57,4 @@ services:
       resources:
         limits:
           # cpus: '0.001'
-          memory: 100M
+          memory: 16M

@@ -1,23 +1,23 @@
-import json
 from ftplib import FTP
-from io import BytesIO
+from Levenshtein import distance
+
+FTP.maxline = 16384
 
 ftp_user = 'username'
 ftp_password = 'mypass'
-json_data = None
 last_first_letter = None
 last_idiom = None
+trie = {}
 
-# Construir a árvore trie
-def build_trie(dictionary):
+def build_trie(word_meaning_pairs):
     trie = {}
-    for word, meaning in dictionary.items():
+    for word, meaning in word_meaning_pairs:
         node = trie
         for char in word:
             if char not in node:
                 node[char] = {}
             node = node[char]
-        node['meaning'] = meaning
+        node['me'] = meaning
     return trie
 
 # Função para procurar uma palavra na árvore trie
@@ -28,7 +28,7 @@ def search_word(trie, word):
             node = node[char]
         else:
             return None
-    return node.get('meaning', None)
+    return node.get('me', None)
 
 def suggest_similar_words(root, word, max_distance):
     similar_words = []
@@ -36,7 +36,7 @@ def suggest_similar_words(root, word, max_distance):
     word = word + "a"
 
     def dfs(node, current_word, distance):
-        if 'meaning' in node:
+        if 'me' in node:
             if distance <= max_distance:
                 similar_words.append(current_word)
 
@@ -61,28 +61,33 @@ def suggest_similar_words(root, word, max_distance):
     return filtered
 
 
-def download_file(ftp_host, ftp_user, ftp_password, remote_file_path):
+def download_file(ftp_host, ftp_user, ftp_password, remote_file_path, user_input):
     try:
         # Connect to the FTP server
         with FTP() as ftp:
             ftp.connect(ftp_host, 21)
             # Log in
             ftp.login(user=ftp_user, passwd=ftp_password)
+            ftp.encoding='utf-8'
+            
+            word_len = len(user_input)
+            word_meaning_pairs = []
+            def callback(l):
+                if l == '':
+                    return
+                
+                a = l.split(',', maxsplit=1)
+                word = a[0]
+                meaning = a[1]
 
-            # Change to the appropriate directory if needed
-            # ftp.cwd('/path/to/remote/directory')
-            # Open a local file for writing in binary mode
-            # Use BytesIO to store the file content in memory
-            file_content = BytesIO()
+                similar_len = len(word)
+                # this code will ensure that we only load words that are similar to the user input
+                if word_len - 1 <= similar_len <= word_len + 1 and (distance(word, user_input) <= 1):
+                    word_meaning_pairs.append((word, meaning))
 
-            # Retrieve the remote file and write it to BytesIO
-            ftp.retrbinary('RETR ' + remote_file_path, file_content.write)
-
-            # Move the cursor to the beginning of the BytesIO buffer
-            file_content.seek(0)
+            ftp.retrlines('RETR ' + remote_file_path, callback)
             ftp.quit()
-            # Read the content of BytesIO into a JSON variable
-            return json.load(file_content)
+            return word_meaning_pairs
            
     except Exception as e:
         print(f"An error occurred: {e}", flush=True)
@@ -114,23 +119,18 @@ def get_host(user_input, idiom_input, first_letter):
 
 def call_api(user_input, idiom_input):
     global last_first_letter  
-    global json_data 
     global last_idiom
+    global trie
 
     try:
         first_letter = user_input[0]
-        if first_letter != last_first_letter and last_idiom != idiom_input:
-            remote_file_path = '/'+first_letter+'.json'
-            last_first_letter = first_letter
-            last_idiom = idiom_input
-            host = get_host(user_input, idiom_input, first_letter)
-            json_data = download_file(host, ftp_user, ftp_password, remote_file_path)
-
-        if json_data == None:
+        remote_file_path = '/'+first_letter+'.csv'
+        host = get_host(user_input, idiom_input, first_letter)
+        word_meaning_pairs = download_file(host, ftp_user, ftp_password, remote_file_path, user_input)
+        if word_meaning_pairs == None:
             not_found_print(user_input, idiom_input)
             return
-
-        trie = build_trie(json_data)
+        trie = build_trie(word_meaning_pairs)
         meaning = search_word(trie, user_input)
         if meaning:
             print(f'"{user_input}": {meaning}', flush=True)
