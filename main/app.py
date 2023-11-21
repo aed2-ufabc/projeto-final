@@ -1,5 +1,6 @@
 from ftplib import FTP
 from Levenshtein import distance
+import time
 
 FTP.maxline = 16384
 
@@ -126,17 +127,28 @@ def call_api(user_input, idiom_input):
         first_letter = user_input[0]
         remote_file_path = '/'+first_letter+'.csv'
         host = get_host(user_input, idiom_input, first_letter)
+        start_time = time.time()
         word_meaning_pairs = download_file(host, ftp_user, ftp_password, remote_file_path, user_input)
+        print("time to download similar words: %s seconds" % (time.time() - start_time))
+
         if word_meaning_pairs == None:
             not_found_print(user_input, idiom_input)
             return
+        
+        start_time = time.time()
         trie = build_trie(word_meaning_pairs)
+        print("time to build trie: %s seconds" % (time.time() - start_time))
+
+        start_time = time.time()
         meaning = search_word(trie, user_input)
+        print("time to search word: %s seconds" % (time.time() - start_time))
         if meaning:
             print(f'"{user_input}": {meaning}', flush=True)
             return
 
+        start_time = time.time()
         similar_words = suggest_similar_words(trie, user_input, 1)
+        print("time to find similar words: %s seconds" % (time.time() - start_time))
         if len(similar_words) != 0:
             similar_print(user_input, idiom_input, similar_words)
             return
