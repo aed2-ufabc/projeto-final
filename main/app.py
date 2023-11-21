@@ -99,7 +99,7 @@ def download_file(ftp_host, ftp_user, ftp_password, remote_file_path):
             with open(temp, 'r')as fp:
                 reader = csv.reader(fp, delimiter=",")
                 for _, line in enumerate(reader):
-                    trie.insert(line[0], True)
+                    trie.insert(line[0], line[1])
 
             end = time.time()
             ftp.quit()
