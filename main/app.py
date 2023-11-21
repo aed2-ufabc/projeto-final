@@ -9,35 +9,77 @@ json_data = None
 last_first_letter = None
 last_idiom = None
 
-def suggest_similar_words(root, word, max_distance):
-    similar_words = []
-    word_len = len(word)
-    word = word + "a"
+class TrieNode:
+    __slots__ = "value", "children"
+    def __init__(self):
+        self.value = None
+        self.children = {}
 
-    def dfs(node, current_word, distance):
-        if 'meaning' in node:
-            if distance <= max_distance:
-                similar_words.append(current_word)
+    def insert( self, word, value):
+        node = self
+        for letter in word:
+            code_point = ord(letter)
+            if code_point not in node.children: 
+                node.children[code_point] = TrieNode()
 
-        if len(current_word) < len(word):
-            if not hasattr(node, 'items'):
-                return
-            for char, next_node in node.items():
-                cost = 0 if char == word[len(current_word)] else 1
-                dfs(next_node, current_word + char, distance + cost)
+            node = node.children[code_point]
+        node.value = value #this serves as a signal that it is a word
 
-    for char, next_node in root.items():
-        cost = 0 if char == word[0] else 1
-        dfs(next_node, char, cost)
 
-    # limit the number of similar words
-    filtered  = []
-    for w in similar_words:
-        similar_len = len(w)
-        if word_len - 1 <= similar_len <= word_len + 1:
-            filtered.append(w)
+    def get(self, word, default=None):
+        val = self._get_value(word)
+        if val is None:
+            return default
+        else:
+            return val
 
-    return filtered
+    def _get_value(self, word):
+        node = self
+        for letter in word:
+            code_point = ord(letter)
+            try:
+                node = node.children[code_point]
+            except KeyError:
+                return None
+        return node.value
+    
+    def suggest_similar_words(self, query, max_distance=1):
+        suggestions = []
+        self._suggest_similar_words_recursive(self, "", query + "a", max_distance, suggestions)
+         # limit the number of similar words
+        filtered  = []
+        word_len = len(query)
+        for w in suggestions:
+            similar_len = len(w)
+            if word_len - 1 <= similar_len <= word_len + 1:
+                filtered.append(w)
+
+        return filtered
+
+    def _suggest_similar_words_recursive(self, node, current_word, query, max_distance, suggestions):
+        if node.value is not None and self._levenshtein_distance(current_word, query) <= max_distance:
+            suggestions.append(current_word)
+
+        for code_point, child_node in node.children.items():
+            next_char = chr(code_point)
+            self._suggest_similar_words_recursive(child_node, current_word + next_char, query, max_distance, suggestions)
+
+    def _levenshtein_distance(self, word1, word2):
+        len1, len2 = len(word1), len(word2)
+        dp = [[0] * (len2 + 1) for _ in range(len1 + 1)]
+
+        for i in range(len1 + 1):
+            for j in range(len2 + 1):
+                if i == 0:
+                    dp[i][j] = j
+                elif j == 0:
+                    dp[i][j] = i
+                elif word1[i - 1] == word2[j - 1]:
+                    dp[i][j] = dp[i - 1][j - 1]
+                else:
+                    dp[i][j] = 1 + min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1])
+
+        return dp[len1][len2]
 
 def download_file(ftp_host, ftp_user, ftp_password, remote_file_path):
 
@@ -47,7 +89,7 @@ def download_file(ftp_host, ftp_user, ftp_password, remote_file_path):
             ftp.login(user=ftp_user, passwd=ftp_password)
             ftp.encoding='utf-8'
             start = time.time()
-            trie = StringTrie()
+            trie = TrieNode()
 
             temp = './temp.csv'
             with open(temp, 'wb') as fp:
@@ -57,7 +99,7 @@ def download_file(ftp_host, ftp_user, ftp_password, remote_file_path):
             with open(temp, 'r')as fp:
                 reader = csv.reader(fp, delimiter=",")
                 for _, line in enumerate(reader):
-                    trie[line[0]] = True
+                    trie.insert(line[0], True)
 
             end = time.time()
             ftp.quit()
@@ -109,12 +151,12 @@ def call_api(user_input, idiom_input):
                 not_found_print(user_input, idiom_input)
                 return
         
-        meaning = trie.has_key(user_input)
+        meaning = trie.get(user_input)
         if meaning:
             print(f'"{user_input}": {meaning}', flush=True)
             return
 
-        similar_words = suggest_similar_words(trie, user_input, 1)
+        similar_words = trie.suggest_similar_words(user_input, 1)
         if len(similar_words) != 0:
             similar_print(user_input, idiom_input, similar_words)
             return
